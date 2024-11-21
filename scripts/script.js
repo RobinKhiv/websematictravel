@@ -1,22 +1,3 @@
-// Render trave form
-const getTravelForm = () => {
-    return `
-    <div class="container-sm mt-4">
-        <form class="filmform row g-3">
-            <div class="col-md-6">
-            <div class="col-12 mb-2">
-                <label for="inputFilm" class="form-label">Favorite movie</label>
-                <input type="text" class="form-control" id="inputFilm" required>
-            </div>
-            <div class="col-12">
-                <button id="filmform__submit" type="submit" class="btn btn-primary">Submit</button>
-            </div>
-            </div>
-        </form>
-    </div>
-    `;
-}
-
 // Fetch film locations from DBpedia
 const getFilmLocations = async film => {
     const filmList = document.getElementById('results');
@@ -84,6 +65,25 @@ const getFilmLocations = async film => {
         .catch(error => console.error('Error querying SPARQL endpoint:', error));
     
     submitbutton.disabled = false;
+}
+
+// Render trave form
+const getTravelForm = () => {
+    return `
+    <div class="container-sm mt-4">
+        <form class="filmform row g-3">
+            <div class="col-md-6">
+            <div class="col-12 mb-2">
+                <label for="inputFilm" class="form-label">Favorite movie</label>
+                <input type="text" class="form-control" id="inputFilm" required>
+            </div>
+            <div class="col-12">
+                <button id="filmform__submit" type="submit" class="btn btn-primary">Submit</button>
+            </div>
+            </div>
+        </form>
+    </div>
+    `;
 }
 
 // Render the page
