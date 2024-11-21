@@ -56,11 +56,28 @@ const getFilmLocations = async film => {
         .then(data => {
             const countries = data.results.bindings;     
             filmList.innerHTML = '';  // Clear existing list
-            countries.forEach(country => {
-                const listItem = document.createElement('li');
-                listItem.textContent = country.countryStr.value; // Display country name
-                filmList.appendChild(listItem);
-            });
+            const h1 = document.createElement('h1');
+            const listgroup = document.createElement('div');
+            h1.textContent = 'Countries where the movie was filmed:';
+            listgroup.classList.add('list-group','col-6');
+            filmList.appendChild(h1);
+            filmList.appendChild(listgroup);
+
+            for (let i = 0; i < countries.length; i++) {
+                let text = countries[i].countryStr.value;
+                if (text === "") continue;
+                // Remove the URL prefix
+                else if (text.includes("http://dbpedia.org/resource/")) 
+                    text = text.replace("http://dbpedia.org/resource/", "");
+                // Replace underscores with spaces
+                if (text.includes("_")) text = text.replace(/_/g, " ");
+
+                const listItem = document.createElement('a');
+                listItem.classList.add('list-group-item','list-group-item-action');
+                listItem.href = '#';
+                listItem.textContent = text; // Display country name
+                listgroup.appendChild(listItem);
+            }
         })
         .catch(error => console.error('Error querying SPARQL endpoint:', error));
     
