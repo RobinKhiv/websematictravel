@@ -54,7 +54,7 @@ const getFilmLocations = async film => {
             // If no results found, display message
             if (countries.length === 0) {
                 const listItem = document.createElement('li');
-                listItem.classList.add('list-group-item','list-group-item-action');
+                listItem.classList.add('list-group-item','list-group-item-action','list-group-item-warning');
                 listItem.textContent = 'No results found... Try another movie.';
                 listgroup.appendChild(listItem);
                 return;
@@ -72,8 +72,11 @@ const getFilmLocations = async film => {
 
                 const listItem = document.createElement('a');
                 listItem.classList.add('list-group-item','list-group-item-action');
-                listItem.href = '#';
                 listItem.textContent = text; // Display country name
+                text = text.replace(/ /g, "%20"); // Replace spaces with %20
+                listItem.href = `https://www.expedia.com/Hotel-Search?destination=${text}&adults=2&rooms=1&sort=RECOMMENDED`;
+                listItem.target = '_blank';
+                listItem.rel = 'noopener noreferrer';
                 listgroup.appendChild(listItem);
             }
         })
