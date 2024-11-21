@@ -58,11 +58,19 @@ const getFilmLocations = async film => {
             filmList.innerHTML = '';  // Clear existing list
             const h1 = document.createElement('h1');
             const listgroup = document.createElement('div');
-            h1.textContent = 'Countries where the movie was filmed:';
+            h1.textContent = `Countries where ${film} movie was filmed:`;
             listgroup.classList.add('list-group','col-6');
             filmList.appendChild(h1);
             filmList.appendChild(listgroup);
-
+           
+            if (countries.length === 0) {
+                const listItem = document.createElement('li');
+                listItem.classList.add('list-group-item','list-group-item-action');
+                listItem.textContent = 'No results found... Try another movie.';
+                listgroup.appendChild(listItem);
+                return;
+            }
+            
             for (let i = 0; i < countries.length; i++) {
                 let text = countries[i].countryStr.value;
                 if (text === "") continue;
