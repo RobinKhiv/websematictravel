@@ -16,16 +16,7 @@ const getTravelForm = () => {
     `;
 }
 
-const render = () => {
-    return (`
-    <h1 class="text-center mt-4">Heads in the Cloud</h1>
-    <main>
-       ${getTravelForm()}
-       <div class="container-sm mt-4" id="results"><div>
-    </main>`
-    );  
-}
-
+// Fetch film locations from DBpedia
 const getFilmLocations = async film => {
     const filmList = document.getElementById('results');
     const submitbutton = document.getElementById('filmform__submit');
@@ -41,6 +32,7 @@ const getFilmLocations = async film => {
             BIND(STR(?country) AS ?countryStr)
         }
     `;
+    filmList.innerHTML = '';  // Clear existing list
     submitbutton.disabled = true;
     img.src = './assets/loading.gif';
     img.alt = 'Loading...';
@@ -59,6 +51,7 @@ const getFilmLocations = async film => {
             filmList.appendChild(h1);
             filmList.appendChild(listgroup);
            
+            // If no results found, display message
             if (countries.length === 0) {
                 const listItem = document.createElement('li');
                 listItem.classList.add('list-group-item','list-group-item-action');
@@ -67,6 +60,7 @@ const getFilmLocations = async film => {
                 return;
             }
 
+            // Display results
             for (let i = 0; i < countries.length; i++) {
                 let text = countries[i].countryStr.value;
                 if (text === "") continue;
@@ -88,9 +82,22 @@ const getFilmLocations = async film => {
     submitbutton.disabled = false;
 }
 
+// Render the page
+const render = () => {
+    return (`
+    <h1 class="text-center mt-4">Heads in the Cloud</h1>
+    <main>
+       ${getTravelForm()}
+       <div class="container-sm mt-4" id="results"><div>
+    </main>`
+    );  
+}
+
+// Main function
 const main = () => {
     document.getElementById('root').innerHTML = render();
     const form = document.querySelector('form.filmform');
+    // Event listener for form submission
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = document.getElementById('inputFilm');
