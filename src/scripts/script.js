@@ -5,7 +5,7 @@ const getTravelForm = () => {
             <div class="col-md-6">
             <div class="col-12 mb-2">
                 <label for="inputFilm" class="form-label">Favorite movie</label>
-                <input type="text" class="form-control" id="inputFilm">
+                <input type="text" class="form-control" id="inputFilm" required>
             </div>
             <div class="col-12">
                 <button id="filmform__submit" type="submit" class="btn btn-primary">Submit</button>
@@ -27,10 +27,6 @@ const render = () => {
 }
 
 const getFilmLocations = async film => {
-    if (!film) {
-        alert("Please enter a movie name.");
-        return;
-    }
     const filmList = document.getElementById('results');
     const submitbutton = document.getElementById('filmform__submit');
     const img = document.createElement('img');
@@ -70,7 +66,7 @@ const getFilmLocations = async film => {
                 listgroup.appendChild(listItem);
                 return;
             }
-            
+
             for (let i = 0; i < countries.length; i++) {
                 let text = countries[i].countryStr.value;
                 if (text === "") continue;
@@ -98,7 +94,6 @@ const main = () => {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = document.getElementById('inputFilm');
-        
         const value = input.value;
         getFilmLocations(value);
         input.value = '';
