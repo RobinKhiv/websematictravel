@@ -1,3 +1,4 @@
+// Render trave form
 const getTravelForm = () => {
     return `
     <div class="container-sm mt-4">
