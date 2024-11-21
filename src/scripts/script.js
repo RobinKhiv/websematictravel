@@ -1,22 +1,14 @@
 const getTravelForm = () => {
     return `
     <div class="container-sm mt-4">
-        <form class="row g-3">
+        <form class="filmform row g-3">
             <div class="col-md-6">
-            <div class="col-md-12">
-                <label for="customRange1" class="form-label">Days on Vacation</label> <span id="vacationrangeval">6</span></br>
-                <input type="range" id="vacationrangecontrol" class="form-range" min="0" max="12" step="1" id="customRange1" onChange="document.getElementById('vacationrangeval').innerText = document.getElementById('vacationrangecontrol').value">
+            <div class="col-12 mb-2">
+                <label for="inputFilm" class="form-label">Favorite movie</label>
+                <input type="text" class="form-control" id="inputFilm">
             </div>
             <div class="col-12">
-                <label for="customRange3" class="form-label">Budget</label> <span>$ <span id="budgetrangeval">2500</span></span></br>
-                <input type="range" id="budgetrangecontrol" class="form-range" min="0" max="5000" step="0.5" id="customRange3" onChange="document.getElementById('budgetrangeval').innerText = document.getElementById('budgetrangecontrol').value">
-            </div>
-            <div class="col-md-6 mb-2">
-                <label for="inputHotel" class="form-label">Hotel</label>
-                <input type="text" class="form-control" id="inputHotel">
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button id="filmform__submit" type="submit" class="btn btn-primary">Submit</button>
             </div>
             </div>
         </form>
@@ -29,9 +21,63 @@ const render = () => {
     <h1 class="text-center mt-4">Heads in the Cloud</h1>
     <main>
        ${getTravelForm()}
-       <div id="results"><div>
+       <div class="container-sm mt-4" id="results"><div>
     </main>`
-    );
+    );  
 }
 
-document.getElementById('root').innerHTML = render();
+const getFilmLocations = async film => {
+    if (!film) {
+        alert("Please enter a movie name.");
+        return;
+    }
+    const filmList = document.getElementById('results');
+    const submitbutton = document.getElementById('filmform__submit');
+    const img = document.createElement('img');
+    const sparqlEndpoint = 'https://dbpedia.org/sparql';
+    const query = `
+        PREFIX dbo: <http://dbpedia.org/ontology/>
+        SELECT DISTINCT ?countryStr WHERE {
+            ?film a dbo:Film.
+            ?film dbp:country ?country.
+            ?film rdfs:label ?label.
+            FILTER (CONTAINS(LCASE(STR(?label)), LCASE("${film}"))).
+            BIND(STR(?country) AS ?countryStr)
+        }
+    `;
+    submitbutton.disabled = true;
+    img.src = './assets/loading.gif';
+    img.alt = 'Loading...';
+    img.classList.add('mx-auto');
+    filmList.appendChild(img);
+
+    await fetch(`${sparqlEndpoint}?query=${encodeURIComponent(query)}&format=json`)
+        .then(response => {return response.json()})
+        .then(data => {
+            const countries = data.results.bindings;     
+            filmList.innerHTML = '';  // Clear existing list
+            countries.forEach(country => {
+                const listItem = document.createElement('li');
+                listItem.textContent = country.countryStr.value; // Display country name
+                filmList.appendChild(listItem);
+            });
+        })
+        .catch(error => console.error('Error querying SPARQL endpoint:', error));
+    
+    submitbutton.disabled = false;
+}
+
+const main = () => {
+    document.getElementById('root').innerHTML = render();
+    const form = document.querySelector('form.filmform');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('inputFilm');
+        
+        const value = input.value;
+        getFilmLocations(value);
+        input.value = '';
+    });
+}
+
+main();
