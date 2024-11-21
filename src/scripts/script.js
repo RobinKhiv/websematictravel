@@ -51,9 +51,9 @@ const getFilmLocations = async film => {
         .then(response => {return response.json()})
         .then(data => {
             const countries = data.results.bindings;     
-            filmList.innerHTML = '';  // Clear existing list
             const h1 = document.createElement('h1');
             const listgroup = document.createElement('div');
+            filmList.innerHTML = '';  // Clear existing list
             h1.textContent = `Countries where ${film} movie was filmed:`;
             listgroup.classList.add('list-group','col-6');
             filmList.appendChild(h1);
