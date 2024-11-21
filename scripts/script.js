@@ -54,7 +54,7 @@ const getFilmLocations = async film => {
             // If no results found, display message
             if (countries.length === 0) {
                 const listItem = document.createElement('li');
-                listItem.classList.add('list-group-item','list-group-item-action','list-group-item-warning');
+                listItem.classList.add('list-group-item','list-group-item-action','list-group-item-danger');
                 listItem.textContent = 'No results found... Try another movie.';
                 listgroup.appendChild(listItem);
                 return;
