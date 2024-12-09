@@ -21,26 +21,13 @@ const getFilmLocations = async film => {
     img.classList.add('mx-auto');
     filmList.appendChild(img);
 
+    const locationlist = new Set();
     await fetch(`${sparqlEndpoint}?query=${encodeURIComponent(query)}&format=json`)
         .then(response => {return response.json()})
         .then(data => {
             const countries = data.results.bindings;     
-            const h1 = document.createElement('h1');
-            const listgroup = document.createElement('div');
-            filmList.innerHTML = '';  // Clear existing list
-            h1.textContent = `Countries where ${film} movie was filmed:`;
-            listgroup.classList.add('list-group','col-6');
-            filmList.appendChild(h1);
-            filmList.appendChild(listgroup);
-           
-            // If no results found, display message
-            if (countries.length === 0) {
-                const listItem = document.createElement('li');
-                listItem.classList.add('list-group-item','list-group-item-action','list-group-item-danger');
-                listItem.textContent = 'No results found... Try another movie.';
-                listgroup.appendChild(listItem);
-                return;
-            }
+            
+            
 
             // Display results
             for (let i = 0; i < countries.length; i++) {
@@ -51,19 +38,80 @@ const getFilmLocations = async film => {
                     text = text.replace("http://dbpedia.org/resource/", "");
                 // Replace underscores with spaces
                 if (text.includes("_")) text = text.replace(/_/g, " ");
-
-                const listItem = document.createElement('a');
-                listItem.classList.add('list-group-item','list-group-item-action');
-                listItem.textContent = text; // Display country name
-                text = text.replace(/ /g, "%20"); // Replace spaces with %20
-                listItem.href = `https://www.expedia.com/Hotel-Search?destination=${text}&adults=2&rooms=1&sort=RECOMMENDED`;
-                listItem.target = '_blank';
-                listItem.rel = 'noopener noreferrer';
-                listgroup.appendChild(listItem);
+                locationlist.add(text);
+                
             }
         })
         .catch(error => console.error('Error querying SPARQL endpoint:', error));
     
+    class SPARQLQueryDispatcher {
+        constructor( endpoint ) {
+            this.endpoint = endpoint;
+        }
+    
+        query( sparqlQuery ) {
+            const fullUrl = this.endpoint + '?query=' + encodeURIComponent( sparqlQuery );
+            const headers = { 'Accept': 'application/sparql-results+json' };
+    
+            return fetch( fullUrl, { headers } ).then( body => body.json() );
+        }
+    }
+        
+    const endpointUrl = 'https://query.wikidata.org/sparql';
+    const sparqlQuery = `
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    
+    SELECT DISTINCT  ?locationName
+    WHERE {
+        # Get films and their narrative locations
+        ?film wdt:P31 wd:Q11424;   # The film is an instance of a movie (Q11424)
+            rdfs:label ?filmTitle;
+            wdt:P840 ?narrativeLocation.  # P840 is the property for narrative location
+        
+        # Get the name of the narrative location
+        ?narrativeLocation rdfs:label ?locationName.
+        # Filters to ensure English language labels
+        FILTER(LANG(?locationName) = "en")
+        FILTER (CONTAINS(LCASE(STR(?filmTitle)), LCASE("${film}"))).
+    }`;
+    
+    const queryDispatcher = new SPARQLQueryDispatcher( endpointUrl );
+
+    await queryDispatcher.query( sparqlQuery )
+        .then( data => {
+            const countries = data.results.bindings; 
+            for (let i = 0; i < countries.length; i++){
+                let text = countries[i].locationName.value;
+                locationlist.add(text);
+            }
+        });
+    
+    filmList.innerHTML = '';  // Clear existing list
+    const h1 = document.createElement('h1');
+    const listgroup = document.createElement('div');    
+    h1.textContent = `Countries where ${film} movie was filmed:`;
+    listgroup.classList.add('list-group','col-6');
+    filmList.appendChild(h1);
+    
+    // If no results found, display message
+    if (locationlist.size === 0) {
+        const listItem = document.createElement('li');
+        listItem.classList.add('list-group-item','list-group-item-action','list-group-item-danger');
+        listItem.textContent = 'No results found... Try another movie.';
+        listgroup.appendChild(listItem);
+    }
+    else {
+        for (let key of locationlist){
+            const listItem = document.createElement('li');
+            
+            listItem.classList.add('list-group-item','list-group-item-action');
+            listItem.textContent = key; // Display country name
+            filmList.appendChild(listItem);
+        }
+    }
+
     submitbutton.disabled = false;
 }
 
