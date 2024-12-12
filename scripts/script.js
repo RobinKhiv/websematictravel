@@ -14,8 +14,8 @@ const getFilmLocations = async film => {
     img.classList.add('mx-auto');
     results.appendChild(img);
     
-    getdbpediaresults(locationlist); // get dbpedia results
-    getwikidataresults(locationlist); // get wikidata results
+    getdbpediaresults(locationlist, film); // get dbpedia results
+    getwikidataresults(locationlist, film); // get wikidata results
     
     results.innerHTML = '';  // Clear existing loading image
     
@@ -52,7 +52,7 @@ const getFilmLocations = async film => {
 }
 
 // function to get results from dbpedia
-const getdbpediaresults = async(locationlist) => {
+const getdbpediaresults = async(locationlist, film) => {
     const dbpediaEnpoint = 'https://dbpedia.org/sparql';
     const dbpediaquery = `
         PREFIX dbo: <http://dbpedia.org/ontology/>
@@ -89,7 +89,7 @@ const getdbpediaresults = async(locationlist) => {
 }
 
 // function to get results from wikidata
-const getwikidataresults = async(locationlist) => {
+const getwikidataresults = async(locationlist, film) => {
     const wikidataEndpoint = 'https://query.wikidata.org/sparql';
     const wikidataQuery = `
     PREFIX wd: <http://www.wikidata.org/entity/>
