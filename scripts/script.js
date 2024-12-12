@@ -41,10 +41,16 @@ const getFilmLocations = async film => {
     // loop through results and display on page
     else {
         for (let key of locationlist){
-            const listItem = document.createElement('li');
-            listItem.classList.add('list-group-item','list-group-item-action');
-            listItem.textContent = key; // Display country name
-            listgroup.appendChild(listItem);
+            let text = key;
+            const listItem = document.createElement('a'); // anquor tag for link
+            listItem.classList.add('list-group-item','list-group-item-action'); //styles for link
+            listItem.textContent = text; // Display country name
+            text = text.replace(/ /g, "%20"); // Replace spaces with %20
+            listItem.href = `https://www.expedia.com/Hotel-Search?destination=${text}&adults=2&rooms=1&sort=RECOMMENDED`;
+            listItem.target = '_blank'; // open in new page
+            listItem.rel = 'noopener noreferrer'; // open in new page
+            listItemli.appendChild(listItem); // add item to list 
+            listgroup.appendChild(listItemli); // add list to page
         }
     }
     // enable the submit button
