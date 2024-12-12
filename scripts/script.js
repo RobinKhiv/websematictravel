@@ -14,8 +14,8 @@ const getFilmLocations = async film => {
     img.classList.add('mx-auto');
     results.appendChild(img);
     
-    getdbpediaresults(locationlist, film); // get dbpedia results
-    getwikidataresults(locationlist, film); // get wikidata results
+    await getdbpediaresults(locationlist, film); // get dbpedia results
+    await getwikidataresults(locationlist, film); // get wikidata results
     
     results.innerHTML = '';  // Clear existing loading image
     
