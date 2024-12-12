@@ -13,71 +13,9 @@ const getFilmLocations = async film => {
     img.alt = 'Loading...';
     img.classList.add('mx-auto');
     results.appendChild(img);
-
     
-    const dbpediaEnpoint = 'https://dbpedia.org/sparql';
-    const dbpediaquery = `
-        PREFIX dbo: <http://dbpedia.org/ontology/>
-        SELECT DISTINCT ?countryStr WHERE {
-            ?film a dbo:Film.
-            ?film dbp:country ?country.
-            ?film rdfs:label ?label.
-            FILTER (CONTAINS(LCASE(STR(?label)), LCASE("${film}"))).
-            BIND(STR(?country) AS ?countryStr)
-        }
-    `;
-    
-    await fetch(`${dbpediaEnpoint}?query=${encodeURIComponent(dbpediaquery)}&format=json`)
-        .then(response => response.json())
-        .then(data => {
-            // filter out response to have only country results
-            const countries = data.results.bindings;
-            // loop through data 
-            for (let i = 0; i < countries.length; i++) {
-                // get text value
-                let text = countries[i].countryStr.value;
-                // if text is empty we don't need the data
-                if (text === "") continue;
-                // Remove the URL prefix so we get only the location
-                else if (text.includes("http://dbpedia.org/resource/")) 
-                    text = text.replace("http://dbpedia.org/resource/", "");
-                // Replace underscores with spaces
-                if (text.includes("_")) text = text.replace(/_/g, " ");
-                // add location to list
-                locationlist.add(text);
-            }
-        })
-        .catch(error => console.error('Error querying dbpedia endpoint:', error));
-        
-    const wikidataEndpoint = 'https://query.wikidata.org/sparql';
-    const wikidataQuery = `
-    PREFIX wd: <http://www.wikidata.org/entity/>
-    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    
-    SELECT DISTINCT  ?locationName
-    WHERE {
-        # Get films and their narrative locations
-        ?film wdt:P31 wd:Q11424;   # The film is an (P31)instance of a movie(Q11424)
-            rdfs:label ?filmTitle;
-            wdt:P840 ?narrativeLocation.  # P840 is the property for narrative location
-        ?narrativeLocation rdfs:label ?locationName. # Get the name of the narrative location
-        FILTER(LANG(?locationName) = "en") # Filters to ensure English language labels
-        FILTER (CONTAINS(LCASE(STR(?filmTitle)), LCASE("${film}"))).
-    }`;
-    
-
-    await fetch(`${wikidataEndpoint}?query=${encodeURIComponent(wikidataQuery)}`,
-        { headers:{ 'Accept': 'application/sparql-results+json' }})
-        .then(response => response.json())
-        .then( data => {
-            const countries = data.results.bindings; 
-            for (let i = 0; i < countries.length; i++){
-                let text = countries[i].locationName.value;
-                locationlist.add(text);
-            }
-        })
-        .catch(error => console.error('Error querying wikidata endpoint:', error));
+    getdbpediaresults(locationlist); // get dbpedia results
+    getwikidataresults(locationlist); // get wikidata results
     
     results.innerHTML = '';  // Clear existing loading image
     
@@ -111,6 +49,76 @@ const getFilmLocations = async film => {
     }
     // enable the submit button
     submitbutton.disabled = false;
+}
+
+// function to get results from dbpedia
+const getdbpediaresults = async(locationlist) => {
+    const dbpediaEnpoint = 'https://dbpedia.org/sparql';
+    const dbpediaquery = `
+        PREFIX dbo: <http://dbpedia.org/ontology/>
+        SELECT DISTINCT ?countryStr WHERE {
+            ?film a dbo:Film.
+            ?film dbp:country ?country.
+            ?film rdfs:label ?label.
+            FILTER (CONTAINS(LCASE(STR(?label)), LCASE("${film}"))).
+            BIND(STR(?country) AS ?countryStr)
+        }
+    `;
+    
+    await fetch(`${dbpediaEnpoint}?query=${encodeURIComponent(dbpediaquery)}&format=json`)
+        .then(response => response.json())
+        .then(data => {
+            // filter out response to have only country results
+            const countries = data.results.bindings;
+            // loop through data 
+            for (let i = 0; i < countries.length; i++) {
+                // get text value
+                let text = countries[i].countryStr.value;
+                // if text is empty we don't need the data
+                if (text === "") continue;
+                // Remove the URL prefix so we get only the location
+                else if (text.includes("http://dbpedia.org/resource/")) 
+                    text = text.replace("http://dbpedia.org/resource/", "");
+                // Replace underscores with spaces
+                if (text.includes("_")) text = text.replace(/_/g, " ");
+                // add location to list
+                locationlist.add(text);
+            }
+        })
+        .catch(error => console.error('Error querying dbpedia endpoint:', error));
+}
+
+// function to get results from wikidata
+const getwikidataresults = async(locationlist) => {
+    const wikidataEndpoint = 'https://query.wikidata.org/sparql';
+    const wikidataQuery = `
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    
+    SELECT DISTINCT  ?locationName
+    WHERE {
+        # Get films and their narrative locations
+        ?film wdt:P31 wd:Q11424;   # The film is an (P31)instance of a movie(Q11424)
+            rdfs:label ?filmTitle;
+            wdt:P840 ?narrativeLocation.  # P840 is the property for narrative location
+        ?narrativeLocation rdfs:label ?locationName. # Get the name of the narrative location
+        FILTER(LANG(?locationName) = "en") # Filters to ensure English language labels
+        FILTER (CONTAINS(LCASE(STR(?filmTitle)), LCASE("${film}"))).
+    }`;
+    
+
+    await fetch(`${wikidataEndpoint}?query=${encodeURIComponent(wikidataQuery)}`,
+        { headers:{ 'Accept': 'application/sparql-results+json' }})
+        .then(response => response.json())
+        .then( data => {
+            const countries = data.results.bindings; 
+            for (let i = 0; i < countries.length; i++){
+                let text = countries[i].locationName.value;
+                locationlist.add(text);
+            }
+        })
+        .catch(error => console.error('Error querying wikidata endpoint:', error));
 }
 
 // Render film location form
