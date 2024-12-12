@@ -42,6 +42,7 @@ const getFilmLocations = async film => {
     else {
         for (let key of locationlist){
             let text = key;
+            const listItemli = document.createElement('li'); // create list element
             const listItem = document.createElement('a'); // anquor tag for link
             listItem.classList.add('list-group-item','list-group-item-action'); //styles for link
             listItem.textContent = text; // Display country name
