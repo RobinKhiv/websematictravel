@@ -1,10 +1,22 @@
-// Fetch film locations from DBpedia
+// Fetch film locations from DBpedia 
 const getFilmLocations = async film => {
-    const filmList = document.getElementById('results');
-    const submitbutton = document.getElementById('filmform__submit');
-    const img = document.createElement('img');
-    const sparqlEndpoint = 'https://dbpedia.org/sparql';
-    const query = `
+    const results = document.getElementById('results'); // selector for results container
+    const submitbutton = document.getElementById('filmform__submit'); //selector for submit button
+    const img = document.createElement('img'); //create img we can add loading icon
+    const locationlist = new Set(); // Create SET for results so there is no repeating data
+
+    results.innerHTML = '';  // Clear existing list
+    submitbutton.disabled = true; // disable submit button
+    
+    //inject loading icon while we query for results
+    img.src = './assets/loading.gif'; 
+    img.alt = 'Loading...';
+    img.classList.add('mx-auto');
+    results.appendChild(img);
+
+    
+    const dbpediaEnpoint = 'https://dbpedia.org/sparql';
+    const dbpediaquery = `
         PREFIX dbo: <http://dbpedia.org/ontology/>
         SELECT DISTINCT ?countryStr WHERE {
             ?film a dbo:Film.
@@ -14,51 +26,31 @@ const getFilmLocations = async film => {
             BIND(STR(?country) AS ?countryStr)
         }
     `;
-    filmList.innerHTML = '';  // Clear existing list
-    submitbutton.disabled = true;
-    img.src = './assets/loading.gif';
-    img.alt = 'Loading...';
-    img.classList.add('mx-auto');
-    filmList.appendChild(img);
-
-    const locationlist = new Set();
-    await fetch(`${sparqlEndpoint}?query=${encodeURIComponent(query)}&format=json`)
-        .then(response => {return response.json()})
+    
+    await fetch(`${dbpediaEnpoint}?query=${encodeURIComponent(dbpediaquery)}&format=json`)
+        .then(response => response.json())
         .then(data => {
-            const countries = data.results.bindings;     
-            
-            
-
-            // Display results
+            // filter out response to have only country results
+            const countries = data.results.bindings;
+            // loop through data 
             for (let i = 0; i < countries.length; i++) {
+                // get text value
                 let text = countries[i].countryStr.value;
+                // if text is empty we don't need the data
                 if (text === "") continue;
-                // Remove the URL prefix
+                // Remove the URL prefix so we get only the location
                 else if (text.includes("http://dbpedia.org/resource/")) 
                     text = text.replace("http://dbpedia.org/resource/", "");
                 // Replace underscores with spaces
                 if (text.includes("_")) text = text.replace(/_/g, " ");
+                // add location to list
                 locationlist.add(text);
-                
             }
         })
-        .catch(error => console.error('Error querying SPARQL endpoint:', error));
-    
-    class SPARQLQueryDispatcher {
-        constructor( endpoint ) {
-            this.endpoint = endpoint;
-        }
-    
-        query( sparqlQuery ) {
-            const fullUrl = this.endpoint + '?query=' + encodeURIComponent( sparqlQuery );
-            const headers = { 'Accept': 'application/sparql-results+json' };
-    
-            return fetch( fullUrl, { headers } ).then( body => body.json() );
-        }
-    }
+        .catch(error => console.error('Error querying dbpedia endpoint:', error));
         
-    const endpointUrl = 'https://query.wikidata.org/sparql';
-    const sparqlQuery = `
+    const wikidataEndpoint = 'https://query.wikidata.org/sparql';
+    const wikidataQuery = `
     PREFIX wd: <http://www.wikidata.org/entity/>
     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -66,57 +58,63 @@ const getFilmLocations = async film => {
     SELECT DISTINCT  ?locationName
     WHERE {
         # Get films and their narrative locations
-        ?film wdt:P31 wd:Q11424;   # The film is an instance of a movie (Q11424)
+        ?film wdt:P31 wd:Q11424;   # The film is an (P31)instance of a movie(Q11424)
             rdfs:label ?filmTitle;
             wdt:P840 ?narrativeLocation.  # P840 is the property for narrative location
-        
-        # Get the name of the narrative location
-        ?narrativeLocation rdfs:label ?locationName.
-        # Filters to ensure English language labels
-        FILTER(LANG(?locationName) = "en")
+        ?narrativeLocation rdfs:label ?locationName. # Get the name of the narrative location
+        FILTER(LANG(?locationName) = "en") # Filters to ensure English language labels
         FILTER (CONTAINS(LCASE(STR(?filmTitle)), LCASE("${film}"))).
     }`;
     
-    const queryDispatcher = new SPARQLQueryDispatcher( endpointUrl );
 
-    await queryDispatcher.query( sparqlQuery )
+    await fetch(`${wikidataEndpoint}?query=${encodeURIComponent(wikidataQuery)}`,
+        { headers:{ 'Accept': 'application/sparql-results+json' }})
+        .then(response => response.json())
         .then( data => {
             const countries = data.results.bindings; 
             for (let i = 0; i < countries.length; i++){
                 let text = countries[i].locationName.value;
                 locationlist.add(text);
             }
-        });
+        })
+        .catch(error => console.error('Error querying wikidata endpoint:', error));
     
-    filmList.innerHTML = '';  // Clear existing list
-    const h1 = document.createElement('h1');
-    const listgroup = document.createElement('div');    
+    results.innerHTML = '';  // Clear existing loading image
+    
+    // create container for list
+    const listgroup = document.createElement('ul'); 
+    
+    // create title for results
+    const h1 = document.createElement('h1');   
     h1.textContent = `Countries where ${film} movie was filmed:`;
     listgroup.classList.add('list-group','col-6');
-    filmList.appendChild(h1);
     
-    // If no results found, display message
+    // add tile and list to results
+    results.appendChild(h1);
+    results.appendChild(listgroup)
+    
+    // If no results found, display No results found... Try another movie.
     if (locationlist.size === 0) {
         const listItem = document.createElement('li');
         listItem.classList.add('list-group-item','list-group-item-action','list-group-item-danger');
         listItem.textContent = 'No results found... Try another movie.';
         listgroup.appendChild(listItem);
     }
+    // loop through results and display on page
     else {
         for (let key of locationlist){
             const listItem = document.createElement('li');
-            
             listItem.classList.add('list-group-item','list-group-item-action');
             listItem.textContent = key; // Display country name
-            filmList.appendChild(listItem);
+            listgroup.appendChild(listItem);
         }
     }
-
+    // enable the submit button
     submitbutton.disabled = false;
 }
 
-// Render trave form
-const getTravelForm = () => {
+// Render film location form
+const filmLocationForm = () => {
     return `
     <div class="container-sm mt-4">
         <form class="filmform row g-3">
@@ -134,12 +132,12 @@ const getTravelForm = () => {
     `;
 }
 
-// Render the page
+// Render the form and container for results
 const render = () => {
     return (`
     <h1 class="text-center mt-4">Heads in the Cloud</h1>
     <main>
-       ${getTravelForm()}
+       ${filmLocationForm()}
        <div class="container-sm mt-4" id="results"><div>
     </main>`
     );  
@@ -147,14 +145,16 @@ const render = () => {
 
 // Main function
 const main = () => {
+    // grab empty element then inject containers for form and results
     document.getElementById('root').innerHTML = render();
-    const form = document.querySelector('form.filmform');
     // Event listener for form submission
+    const form = document.querySelector('form.filmform');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+        //get text input
         const input = document.getElementById('inputFilm');
-        const value = input.value;
-        getFilmLocations(value);
+        getFilmLocations(input.value);
+        // empty text box
         input.value = '';
     });
 }
