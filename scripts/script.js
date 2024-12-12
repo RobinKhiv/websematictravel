@@ -112,9 +112,12 @@ const getwikidataresults = async(locationlist, film) => {
         { headers:{ 'Accept': 'application/sparql-results+json' }})
         .then(response => response.json())
         .then( data => {
+            // filter out response to have only country results
             const countries = data.results.bindings; 
+            // loop through data 
             for (let i = 0; i < countries.length; i++){
                 let text = countries[i].locationName.value;
+                // add location to list
                 locationlist.add(text);
             }
         })
